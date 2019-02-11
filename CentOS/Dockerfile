@@ -58,6 +58,14 @@ RUN true \
     && systemctl mask systemd-udevd-kernel.socket \
     && true
 
+# Fix issue with "not initialized in udev database even after waiting 10000000 microseconds"
+# similar described in https://bbs.archlinux.org/viewtopic.php?id=242594
+# Happens after upgrade lvm package to 'lvm2-2.02.180-10.el7_6.3' (on lvm2-2.02.180-10.el7_6.2 works without this "fix")
+VOLUME [ "/run/lvm" ]
+RUN true \
+    && sed -i 's/md_component_detection = 1/md_component_detection = 0/' /etc/lvm/lvm.conf \
+    && true
+
 # use lvmetad from the host, dont run it in the container
 # don't wait for udev to manage the /dev entries, disable udev_sync, udev_rules in lvm.conf
 VOLUME [ "/run/lvm" ]
@@ -65,7 +73,7 @@ RUN true \
     && systemctl mask lvm2-lvmetad.service \
     && systemctl mask lvm2-lvmetad.socket \
     && sed -i 's/^\sudev_rules\s*=\s*1/udev_rules = 0/' /etc/lvm/lvm.conf \
-    && sed -i 's/^\sudev_sync\s*=\s*1/udev_sync= 0/' /etc/lvm/lvm.conf \
+    && sed -i 's/^\sudev_sync\s*=\s*1/udev_sync = 0/' /etc/lvm/lvm.conf \
     && true
 
 VOLUME [ "/sys/fs/cgroup" ]
